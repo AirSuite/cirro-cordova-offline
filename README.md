@@ -13,7 +13,7 @@ npm install -g cordova ios-sim
 Clone the repository, add platforms for iOS and Android, add the Cordova SQLite plugin, and run app on iOS emulator.
 
 ```
-git clone https://github.com/AirSuite/mapbox-gl-js-cordova-offline-example.git
+git clone https://github.com/AirSuite/cirro-cordova-offline.git
 cd mapbox-gl-js-cordova-offline-example
 cordova platform add ios
 cordova platform add android
