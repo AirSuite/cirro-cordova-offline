@@ -27,7 +27,8 @@ body {
 <script src="mapbox-gl.js"></script>
 <script>
 window.openDatabases = []; //to hold references to the multiple mbtile open databases
-document.addEventListener('deviceready', function() {
+var map;
+function loadDemo(){
 
   var mapStyle = {
     "version": 8,
@@ -80,7 +81,7 @@ document.addEventListener('deviceready', function() {
     ]
   };
 
-  var map = new mapboxgl.Map({
+  map = new mapboxgl.Map({
     container: 'map',
     center: [-74.50, 40],
     zoom: 2,
@@ -89,7 +90,71 @@ document.addEventListener('deviceready', function() {
   });
   map.addControl(new mapboxgl.NavigationControl());
 
-}, false);
+}
+var ANDROID = true;
+var IOS = false;
+document.addEventListener('deviceready', onDeviceReady, false);
+function onDeviceReady() {
+  console.log(cordova.file);
+  var fileURL
+  if (ANDROID) fileURL = cordova.file.applicationStorageDirectory+"databases/naoverview.mbtiles";
+  if (IOS) fileURL = cordova.file.dataDirectory+"databases/naoverview.mbtiles";
+  checkIfFileExists(fileURL);
+}
+function downloadMbtiles(fileURL){
+  if (IOS) progress.show("Downloading..");
+  if (ANDROID) cordova.plugin.pDialog.init({
+      theme: 'HOLO_DARK',
+      progressStyle: 'HORIZONTAL',
+      cancelable: false,
+      title: 'AirSuite Download',
+      message: 'Perparing...'
+    });
+  var fileTransfer = new FileTransfer();
+  fileTransfer.onprogress = function(progressEvent) {
+      if (progressEvent.lengthComputable) {
+          var percent = Math.round(progressEvent.loaded / progressEvent.total *100);
+          var stats = Math.round(progressEvent.loaded/1000000)+"MB / "+ Math.round(progressEvent.total/1000000)+"MB"
+          if (IOS) progress.update(stats);
+          if (ANDROID) cordova.plugin.pDialog.setProgress(percent).setMessage(stats);
+
+      } else {
+          if (IOS) progress.update("Downloading Unknown Amount");
+          if (ANDROID) cordova.plugin.pDialog.setMessage("Download Unknown Amount");
+      }
+  };
+  var uri = encodeURI("");
+  fileTransfer.download(
+      uri,
+      fileURL,
+      function(entry) {
+          console.log("download complete: " + entry.toURL());
+          if (IOS) progress.hide();
+          if (ANDROID) cordova.plugin.pDialog.dismiss();
+          loadDemo();
+      },
+      function(error) {
+          console.log("download error source " + error.source);
+          console.log("download error target " + error.target);
+          console.log("download error code" + error.code);
+          if (IOS) progress.hide();
+          if (ANDROID) cordova.plugin.pDialog.dismiss();
+      },
+      true,
+      null
+  );
+}
+function checkIfFileExists(path){
+    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem){
+        fileSystem.root.getFile(path, { create: false }, function(fileEntry){
+          loadDemo(path);
+        }, function(e){
+          downloadMbtiles(path);
+        });
+    }, function(err){
+      console.log(evt.target.error.code);
+    });
+}
 </script>
 </body>
 </html>
